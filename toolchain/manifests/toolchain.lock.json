@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "inventory_complete": true,
+  "generated_at": "2026-08-25T14:33:28Z",
+  "generated_from": [
+    "user-supplied AviSynth+ Windows x64 source tree",
+    "official upstream assets checked 2026-08-25"
+  ],
+  "toolchain": {
+    "architecture": "x64",
+    "default_install_root": "%LOCALAPPDATA%\\avisynth-delogo",
+    "offline_cache_root": "user-supplied"
+  },
+  "files": [
+    {
+      "relative_path": "AviSynth.dll",
+      "component": "AviSynth+",
+      "version": "3.7.5",
+      "architecture": "x64",
+      "sha256": "8f7d07917e4b364df5fd7f1b8b3c1e135465d73325f8d25bc4354dd6435afab4",
+      "license": "GPL-2.0",
+      "project": "https://github.com/AviSynth/AviSynthPlus",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/AviSynth/AviSynthPlus/releases/download/v3.7.5/AviSynthPlus_3.7.5_20250420-filesonly.7z",
+        "cache_path": "AviSynthPlus_3.7.5_20250420-filesonly.7z",
+        "sha256": "4db18a1b3787b46ed99e810fa41cdc238f7f6ac82ffa6ed84d53fa8cefb5146f",
+        "archive_path": "AviSynthPlus_3.7.5_20250420-filesonly/x64/AviSynth.dll"
+      }
+    },
+    {
+      "relative_path": "ffmpeg.exe",
+      "component": "FFmpeg Windows essentials",
+      "version": "9.0.1",
+      "architecture": "x64",
+      "sha256": "72a489eccd008c2ec2c0a5856c5c75bc3d8bbfa90166c4566865c246445e6aa3",
+      "license": "GPL-3.0; see bundled upstream license",
+      "project": "https://ffmpeg.org",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/GyanD/codexffmpeg/releases/download/9.0.1/ffmpeg-9.0.1-essentials_build.7z",
+        "cache_path": "ffmpeg-9.0.1-essentials_build.7z",
+        "sha256": "49a73bdf0850092a252ac4641d922f3048d63ed113e196cc65ce1e4f7fb33e85",
+        "archive_path": "ffmpeg-9.0.1-essentials_build/bin/ffmpeg.exe"
+      }
+    },
+    {
+      "relative_path": "ffprobe.exe",
+      "component": "FFmpeg Windows essentials",
+      "version": "9.0.1",
+      "architecture": "x64",
+      "sha256": "19202b23c0043f15ad1b7bce2344f406fd52bd6efd8f995ce02e7392a1cec52f",
+      "license": "GPL-3.0; see bundled upstream license",
+      "project": "https://ffmpeg.org",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/GyanD/codexffmpeg/releases/download/9.0.1/ffmpeg-9.0.1-essentials_build.7z",
+        "cache_path": "ffmpeg-9.0.1-essentials_build.7z",
+        "sha256": "49a73bdf0850092a252ac4641d922f3048d63ed113e196cc65ce1e4f7fb33e85",
+        "archive_path": "ffmpeg-9.0.1-essentials_build/bin/ffprobe.exe"
+      }
+    },
+    {
+      "relative_path": "Plugins/ImageSeq.dll",
+      "component": "AviSynth+ ImageSeq",
+      "version": "3.7.5",
+      "architecture": "x64",
+      "sha256": "434e89f4f5ebe71f27fd36250a7d886e1bf0b41d71c5059697d6f566543d024a",
+      "license": "GPL-2.0",
+      "project": "https://github.com/AviSynth/AviSynthPlus",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/AviSynth/AviSynthPlus/releases/download/v3.7.5/AviSynthPlus_3.7.5_20250420-filesonly.7z",
+        "cache_path": "AviSynthPlus_3.7.5_20250420-filesonly.7z",
+        "sha256": "4db18a1b3787b46ed99e810fa41cdc238f7f6ac82ffa6ed84d53fa8cefb5146f",
+        "archive_path": "AviSynthPlus_3.7.5_20250420-filesonly/x64/plugins/ImageSeq.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/InpaintDelogo.avsi",
+      "component": "InpaintDelogo",
+      "version": "3.7+a6cc5d7",
+      "architecture": "any",
+      "sha256": "a4e264d2b8fe4c832b43c317043dac452b7b4b898409ce4677e25bbc050b23a6",
+      "license": "Unlicense",
+      "project": "https://github.com/Purfview/InpaintDelogo",
+      "required": true,
+      "source": {
+        "type": "file",
+        "uri": "https://raw.githubusercontent.com/Purfview/InpaintDelogo/a6cc5d7bf1fd559b02d162b6e32d0b4f4a79a9b5/InpaintDelogo.avsi",
+        "cache_path": "Plugins/InpaintDelogo.avsi",
+        "sha256": "a4e264d2b8fe4c832b43c317043dac452b7b4b898409ce4677e25bbc050b23a6"
+      }
+    },
+    {
+      "relative_path": "Plugins/AvsInPaint.dll",
+      "component": "AvsInpaint",
+      "version": "1.3",
+      "architecture": "x64",
+      "sha256": "daa8b387d72aae84b6b53f9778dbfd14a0ceda4f69f43d3f7df2fedfe6c0dab6",
+      "license": "GPL-2.0",
+      "project": "https://github.com/pinterf/AvsInpaint",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/pinterf/AvsInpaint/releases/download/v1.3/AvsInpaint-v1.3.7z",
+        "cache_path": "Plugins/_SRC/AvsInpaint-v1.3.7z",
+        "sha256": "e211f0db6ddcd28d60c27ab4c2c83b66ebce2bc2c1b355153608bce533494e57",
+        "archive_path": "x64/AvsInPaint.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/masktools2.dll",
+      "component": "MaskTools2",
+      "version": "2.2.30",
+      "architecture": "x64",
+      "sha256": "838fa0a7cde5ca2dc748e1b62a3cc7ca7d0cdfedd7602f5efdf9fd35a7d45d69",
+      "license": "GPL-2.0",
+      "project": "https://github.com/pinterf/masktools",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/pinterf/masktools/releases/download/2.2.30/masktools2_v2.2.30.7z",
+        "cache_path": "Plugins/_SRC/masktools2_v2.2.30.7z",
+        "sha256": "3869f2b8c379069eb4a1283a71a24b9b0273c9d7f3bfdcda8b65c8be01013aae",
+        "archive_path": "x64/masktools2.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/neo-fft3d.dll",
+      "component": "Neo FFT3D",
+      "version": "r14",
+      "architecture": "x64",
+      "sha256": "55cffe53c92cf55c3fc9245edfc6fec12032671166c319a40ee0999f7aea3e26",
+      "license": "GPL-2.0",
+      "project": "https://github.com/HomeOfAviSynthPlusEvolution/neo_FFT3D",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/HomeOfAviSynthPlusEvolution/neo_FFT3D/releases/download/r14/neo_FFT3D_r14.7z",
+        "cache_path": "Plugins/_SRC/neo_FFT3D_r14.7z",
+        "sha256": "d4c3a9d59291a55130abca1a545d99ba3ecdec0d9ea7d3b4ee6aa3c266b85159",
+        "archive_path": "x64/neo-fft3d.dll"
+      }
+    },
+    {
+      "relative_path": "libfftw3f-3.dll",
+      "component": "FFTW single-precision runtime",
+      "version": "3.3.5",
+      "architecture": "x64",
+      "sha256": "42ca18fff35dd12890e04478bc990005b3969cb744f6843976bd436ccd7f0a4c",
+      "license": "GPL-2.0-or-later",
+      "project": "https://fftw.org",
+      "required": true,
+      "source": {
+        "type": "zip",
+        "uri": "https://fftw.org/pub/fftw/fftw-3.3.5-dll64.zip",
+        "cache_path": "Plugins/_SRC/fftw-3.3.5-dll64.zip",
+        "sha256": "cfd88dc0e8d7001115ea79e069a2c695d52c8947f5b4f3b7ac54a192756f439f",
+        "archive_path": "libfftw3f-3.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/FrameSel_x64.dll",
+      "component": "FrameSel",
+      "version": "2.20",
+      "architecture": "x64",
+      "sha256": "d79ddb0aaf86f0eea1a9957ef9a0d2b6d04e41a16dc86441df075366429c2a76",
+      "license": "GPL-2.0",
+      "project": "https://avisynth.nl/index.php/FrameSel",
+      "required": true,
+      "source": {
+        "type": "zip",
+        "uri": "http://web.archive.org/web/20200526164026if_/https://files.videohelp.com/u/223002/FrameSel_x86_x64_dll_v2-20_20180420.zip",
+        "cache_path": "Plugins/_SRC/FrameSel_x86_x64_dll_v2-20_20180420.zip",
+        "sha256": "1e51dc105f11172a5d96aea7d838d006ca2e5b0c51783479a42c593786c900f8",
+        "archive_path": "FrameSel_x86_x64_dll_v2-20_20180420/Avisynth+_x64/FrameSel_x64.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/grunt.dll",
+      "component": "GRunT",
+      "version": "1.0.2",
+      "architecture": "x64",
+      "sha256": "d3d8bc778295d3f62cd8b50bdb83e53438e87da178110619854adc64cafd0622",
+      "license": "GPL-2.0",
+      "project": "https://github.com/pinterf/GRunT",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/pinterf/GRunT/releases/download/v1.0.2/GRunT-v1.02.7z",
+        "cache_path": "Plugins/_SRC/GRunT-v1.02.7z",
+        "sha256": "0ae3e11e23be0c335d641b94537e028048a8cb125e3ea86fa3d479bf41ea588a",
+        "archive_path": "x64/grunt.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/RT_Stats_x64.dll",
+      "component": "RT_Stats",
+      "version": "2.00Beta12",
+      "architecture": "x64",
+      "sha256": "a3f0122b4ab2879acc7ad39c111dbac25df67a2f47f7357ed32efe4b71555211",
+      "license": "GPL-2.0",
+      "project": "https://avisynth.nl/index.php/RT_Stats",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "http://web.archive.org/web/20200526014905if_/https://files.videohelp.com/u/223002/RT_Stats_25_26_x86_x64_dll_v2.00Beta12_20181125.7z",
+        "cache_path": "Plugins/_SRC/RT_Stats_25_26_x86_x64_dll_v2.00Beta12_20181125.7z",
+        "sha256": "0e25393de02cecda993d07d8b7abb9e4954445252caaea3a19a6f6aaaa0e9f31",
+        "archive_path": "RT_Stats_25&26_x86_x64_dll_v2.00Beta12_20181125/Avisynth26_x64/RT_Stats_x64.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/LSMASHSource.dll",
+      "component": "L-SMASH-Works",
+      "version": "1310.0.0.0",
+      "architecture": "x64",
+      "sha256": "0abac09524e56413eeb8b52119d8575fc14753492ce53e2133943b91e08452d6",
+      "license": "mixed; see upstream",
+      "project": "https://github.com/HomeOfAviSynthPlusEvolution/L-SMASH-Works",
+      "required": true,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/HomeOfAviSynthPlusEvolution/L-SMASH-Works/releases/download/1310.0.0.0/L-SMASH-Works-r1310.0.0.0.7z",
+        "cache_path": "Plugins/_SRC/L-SMASH-Works-r1310.0.0.0.7z",
+        "sha256": "b4fd48e3cb97c9583e08e69a3dd49a6500dede3bbc054f0fb9cddd0f5448e6e1",
+        "archive_path": "x64/LSMASHSource.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/DoomDelogo.avsi",
+      "component": "DoomDelogo",
+      "version": "1.0+cfed253",
+      "architecture": "any",
+      "sha256": "e77a67ec211ff967ae85e1e7408f4d3036f269dbf722fd9c407e68a4955a9611",
+      "license": "Unlicense",
+      "project": "https://github.com/Purfview/DoomDelogo",
+      "required": false,
+      "source": {
+        "type": "file",
+        "uri": "https://raw.githubusercontent.com/Purfview/DoomDelogo/cfed253bb3e77668606e09de6fe363a6e9867873/DoomDelogo.avsi",
+        "cache_path": "Plugins/DoomDelogo.avsi",
+        "sha256": "e77a67ec211ff967ae85e1e7408f4d3036f269dbf722fd9c407e68a4955a9611"
+      }
+    },
+    {
+      "relative_path": "Plugins/fft3dfilter.dll",
+      "component": "FFT3DFilter",
+      "version": "2.12",
+      "architecture": "x64",
+      "sha256": "8751231bd47817a1b342751706e0142fabf1bd193ab51d39375bded29a13404a",
+      "license": "GPL-2.0",
+      "project": "https://github.com/pinterf/fft3dfilter",
+      "required": false,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/pinterf/fft3dfilter/releases/download/v2.12/FFT3dFilter-v2.12.7z",
+        "cache_path": "Plugins/_SRC/FFT3dFilter-v2.12.7z",
+        "sha256": "a0643d94c614bdd61cb3fe870d0b4d361ade82e065a1ce4f66a69be4f96d7ba4",
+        "archive_path": "x64/fft3dfilter.dll"
+      }
+    },
+    {
+      "relative_path": "Plugins/FFMS2.avsi",
+      "component": "FFMS2 helper",
+      "version": "5.0",
+      "architecture": "any",
+      "sha256": "f5eb856c9d5aceababef07de2113287b98ae2524798b18b795acd792917db7d2",
+      "license": "GPL-3.0",
+      "project": "https://github.com/FFMS/ffms2",
+      "required": false,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/FFMS/ffms2/releases/download/5.0/ffms2-5.0-msvc.7z",
+        "cache_path": "Plugins/_SRC/ffms2-5.0-msvc.7z",
+        "sha256": "e867a3df7262865107df40f230f5b8e1455905eba9b8852e6f35b1227537caeb",
+        "archive_path": "ffms2-5.0-msvc/FFMS2.avsi"
+      }
+    },
+    {
+      "relative_path": "Plugins/ffms2.dll",
+      "component": "FFMS2",
+      "version": "5.0",
+      "architecture": "x64",
+      "sha256": "970d3f8d170fd13a2dd8a7e8a7f56b0ce5a1dc7eea79d1774bbb2c2cab47e3f0",
+      "license": "GPL-3.0",
+      "project": "https://github.com/FFMS/ffms2",
+      "required": false,
+      "source": {
+        "type": "7z",
+        "uri": "https://github.com/FFMS/ffms2/releases/download/5.0/ffms2-5.0-msvc.7z",
+        "cache_path": "Plugins/_SRC/ffms2-5.0-msvc.7z",
+        "sha256": "e867a3df7262865107df40f230f5b8e1455905eba9b8852e6f35b1227537caeb",
+        "archive_path": "ffms2-5.0-msvc/x64/ffms2.dll"
+      }
+    }
+  ],
+  "packages": [
+    {
+      "component": "AvsPmod GPo",
+      "version": "2.7.9.7",
+      "architecture": "x64",
+      "asset": "AvsPmod_v2.7.9.7_.Windows_x86-64.zip",
+      "sha256": "3e2719d91d1bf55c48330bfae6cf681e2142595b2f56572193f7b6bb7cb2e0fe",
+      "source": "https://github.com/gispos/AvsPmod/releases/download/2.7.9.7/AvsPmod_v2.7.9.7_.Windows_x86-64.zip",
+      "cache_path": "AvsPmod_v2.7.9.7_.Windows_x86-64.zip",
+      "license": "GPL-2.0",
+      "required": false,
+      "include_in_bundle": true,
+      "archive_type": "zip",
+      "install_subdirectory": "AvsPmod"
+    }
+  ]
+}
