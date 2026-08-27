@@ -38,6 +38,10 @@ run = "pwsh -NoProfile -File ./toolchain/scripts/bootstrap-toolchain.ps1"
 description = "Verify an assembled Windows toolchain; append PowerShell parameters after --"
 run = "pwsh -NoProfile -File ./toolchain/scripts/verify-toolchain.ps1"
 
+[tasks."validate:render"]
+description = "Validate a completed render; append source, output, and toolchain parameters after --"
+run = "pwsh -NoProfile -File ./toolchain/scripts/validate-render.ps1"
+
 [tasks."build:toolchain"]
 description = "Build and verify the distributable Windows toolchain ZIP"
 run = "pwsh -NoProfile -File ./toolchain/scripts/build-release.ps1"

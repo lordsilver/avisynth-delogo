@@ -100,6 +100,7 @@ try {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "activate.ps1") -Destination (Join-Path $bundleRoot "activate.ps1")
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "Start-AvsPmod.cmd") -Destination (Join-Path $bundleRoot "Start-AvsPmod.cmd")
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot "verify-toolchain.ps1") -Destination (Join-Path $bundleRoot "verify-toolchain.ps1")
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "validate-render.ps1") -Destination (Join-Path $bundleRoot "validate-render.ps1")
     Copy-Item -LiteralPath (Join-Path $toolchainRoot "docs\bundle-readme.md") -Destination (Join-Path $bundleRoot "README.md")
     Copy-Item -LiteralPath (Join-Path $toolchainRoot "docs\third-party-notices.md") -Destination (Join-Path $bundleRoot "THIRD-PARTY-NOTICES.md")
     Copy-Item -LiteralPath $lockFile -Destination (Join-Path $bundleRoot "toolchain.lock.json")

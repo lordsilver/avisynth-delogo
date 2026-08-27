@@ -139,14 +139,14 @@ DoomDelogo(regionX, regionY, regionW, regionH)
 
 #### Advanced Parameters
 
-| Parameter | Default | Range   | Description                                     |
-| --------- | ------- | ------- | ----------------------------------------------- |
-| `Inflate` | 1       | 0-2     | Expand mask by pixels                           |
-| `Deep`    | 3       | 1-5     | Multi-pass processing                           |
-| `Interp`  | 2       | 0-4     | Interpolation for artifacts                     |
-| `dPP`     | -3      | -8 to 8 | Blur or denoise applied to the deblended area   |
-| `oPP`     | -5      | -8 to 8 | Blur or denoise applied to the inpainted area   |
-| `Turbo`   | 0       | -2 to 3 | Speed versus quality preset, including UHD `-1` |
+| Parameter | Default | Range   | Description                                                         |
+| --------- | ------- | ------- | ------------------------------------------------------------------- |
+| `Inflate` | 1       | 0-2     | Filter-time mask expansion; test separately from a pre-dilated mask |
+| `Deep`    | 3       | 1-5     | Multi-pass processing                                               |
+| `Interp`  | 2       | 0-4     | Interpolation for artifacts                                         |
+| `dPP`     | -3      | -8 to 8 | Blur or denoise applied to the deblended area                       |
+| `oPP`     | -5      | -8 to 8 | Blur or denoise applied to the inpainted area                       |
+| `Turbo`   | 0       | -2 to 3 | Speed versus quality preset, including UHD `-1`                     |
 
 #### Analysis Parameters
 
@@ -165,7 +165,7 @@ DoomDelogo(regionX, regionY, regionW, regionH)
 - **Deblend**: For transparent/semi-transparent logos
 - **Both**: For logos with mixed transparency
 
-These are starting points, not reusable presets. First build the mask from a black, preferably pure-black for a bright opaque watermark, or plain-background source frame when possible and verify that it selects only the watermark. A temporary crop can help isolate it, but the final mask must be restored to full-frame dimensions. Because black can conceal a dark outline or drop shadow, also verify the mask on a plain colored frame and add only the smallest tested dilation that removes any fringe. Then test a fixed matrix on the same 3–10 exact frames distributed across the full timeline, compare the best candidates over the same motion interval, and tune the region, mask, analysis, and post-processing for that video before rendering.
+These are starting points, not reusable presets. First build the mask from a black, preferably pure-black for a bright opaque watermark, or plain-background source frame when possible and verify that it selects only the watermark. A temporary crop can help isolate it, but the final mask must be restored to full-frame dimensions. Because black can conceal a dark outline or drop shadow, also verify the mask on a plain colored frame and add only the smallest tested dilation that removes any fringe. Record saved-mask dilation and the filter's `Inflate` value separately: a mask saved after two-pixel dilation with `Inflate=0` is not automatically equivalent to an undilated mask with `Inflate=2`. Then test a fixed matrix on the same 3–10 exact frames distributed across the full timeline, compare the best candidates over the same motion interval, and tune the region, mask, analysis, and post-processing for that video before rendering.
 
 ### Analysis Methods
 
@@ -178,18 +178,20 @@ These are starting points, not reusable presets. First build the mask from a bla
 
 Only analyze frames where the logo is present and not animated. Do not use `Prefetch()` during analysis.
 
-### Quality vs Speed Settings
+### Candidate Settings
 
 ```python
-# High Quality (slow)
-Turbo=0, Deep=5, Analyze=3
+# Opaque Inpaint baseline; exposes post-processing softness
+Mode="Inpaint", Turbo=0, Inflate=0, oPP=0
 
-# Balanced
-Turbo=0, Deep=3, Analyze=1
+# Faster preview of the same opaque-logo mode
+Mode="Inpaint", Turbo=2, Inflate=0, oPP=0
 
-# Fast (lower quality)
-Turbo=2, Deep=1, Analyze=1
+# Transparent-logo candidate only
+Mode="Deblend", Analyze=1, AnalyzeTh=45
 ```
+
+These are comparison starting points, not a quality ladder. `Analyze` is ignored in pure Inpaint mode, while Deblend and Both require a genuinely transparent or mixed watermark.
 
 ## Workflow for New Projects
 
@@ -231,6 +233,8 @@ InpaintDelogo(Loc=regionLoc, mask=maskPath, Automask=1, Analyze=2, aMix=-2)
 - Check generated mask.bmp file
 - Edit manually in image editor if needed
 - Adjust `aMix` and regenerate if necessary
+- If edge coverage is uncertain, save separately named dilated mask revisions and compare them with `Inflate=0`
+- Test filter-time `Inflate` separately with the saved mask held constant
 
 ### Step 5: Perform Logo Removal
 
@@ -242,18 +246,20 @@ InpaintDelogo(Loc=regionLoc, mask=maskPath)
 
 In Inpaint mode, InpaintDelogo forces `Analyze=0`, so setting `Analyze=-4` has no effect. `aMix` is used only while `Automask=1`, so it also has no effect during this removal step.
 
-### Step 6: Post-Processing Options
+### Step 6: Compare Candidate Options
 
 ```python
-# Better quality (complex logos)
-Mode="Both", Deep=5, Interp=3
+# Opaque-logo baseline
+Mode="Inpaint", Turbo=0, Inflate=0, oPP=0
 
-# Faster processing
-Turbo=2
+# Faster preview of the same mode
+Mode="Inpaint", Turbo=2, Inflate=0, oPP=0
 
 # Very transparent logos; analyze every eligible frame
 Mode="Deblend", Analyze=3
 ```
+
+Do not promote Deblend or Both as a quality upgrade for an opaque watermark. Change one decision at a time and compare every candidate on the same reference frames.
 
 ## Exact-frame Testing
 
@@ -266,7 +272,7 @@ targetFrame = 1000
 regionLoc = "1500,880,320,180"
 
 source = LWLibAvVideoSource(sourcePath).Trim(targetFrame, targetFrame)
-source.InpaintDelogo(Loc=regionLoc, mask=maskPath, Automask=0, Mode="Inpaint", Turbo=-1, oPP=-5)
+source.InpaintDelogo(Loc=regionLoc, mask=maskPath, Automask=0, Mode="Inpaint", Turbo=0, Inflate=0, oPP=0)
 ```
 
 For analysis-dependent deblend or `Both` tests, filter the source timeline and trim afterward:
@@ -296,15 +302,16 @@ Choose 3–10 reference frames from early, middle, and late sections that cover 
 
 ### Common Issues and Solutions
 
-| Problem                      | Solution                                                                        |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| Logo remnants visible        | Increase `Deep`, try `Mode="Both"`                                              |
-| Artifacts around logo        | Adjust `Interp`, increase `dPP`                                                 |
-| Mask too thick/thin          | Adjust `aMix` value                                                             |
-| Poor mask generation         | Use `Automask=1, Analyze=2`, then adjust `aMix`                                 |
-| Processing too slow          | Use `Turbo=1-3`, decrease `Deep`                                                |
-| `Use even numbers for "Loc"` | Make all four `Loc` values even, including width/height or negative trims       |
-| Mask preview is black        | Confirm that `Loc` overlaps the white logo and that logo pixels are exactly 255 |
+| Problem                      | Solution                                                                                                 |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Logo remnants visible        | Recheck threshold and edge coverage; compare minimal saved-mask dilation and filter `Inflate` separately |
+| Opaque result looks blurry   | Compare `oPP=0` and relevant `Turbo` values before adding post-processing                                |
+| Transparent-logo residue     | After confirming transparency, compare Deblend or Both on the shared frame set                           |
+| Mask too thick/thin          | Regenerate or edit a manual mask; use `aMix` only while generating an automask                           |
+| Poor mask generation         | Prefer extraction from a clean black/plain frame; use `Automask=1, Analyze=2` only as a fallback         |
+| Processing too slow          | Use `Turbo=1-3` for previews, then verify the final-quality candidate separately                         |
+| `Use even numbers for "Loc"` | Make all four `Loc` values even, including width/height or negative trims                                |
+| Mask preview is black        | Confirm that `Loc` overlaps the white logo and that logo pixels are exactly 255                          |
 
 ### Coordinate Semantics
 
@@ -349,17 +356,17 @@ ImageSource(maskPath, 0, 0).Greyscale.ConvertToRGB32.Crop(regionX, regionY, regi
 - If the thresholded crop shows the white logo, the base mask is valid and the next step is analysis/deblend tuning.
 - Changing `Analyze` does not repair an empty base mask; Deblend analysis still requires the mask.
 
-### Quality Settings Examples
+### Mode-Specific Candidate Examples
 
 ```python
-# Best Quality (slowest)
-InpaintDelogo(Loc=regionLoc, mask="mask.bmp", Mode="Both", Deep=5, Analyze=3, Interp=4, dPP=-5)
+# Opaque-logo baseline with a validated mask
+InpaintDelogo(Loc=regionLoc, mask="mask.bmp", Mode="Inpaint", Turbo=0, Inflate=0, oPP=0)
 
-# Balanced Quality
+# Transparent-logo candidate
 InpaintDelogo(Loc=regionLoc, mask="mask.bmp", Mode="Deblend", Analyze=1, AnalyzeTh=45, Interp=2)
 
-# Fast Preview
-InpaintDelogo(Loc=regionLoc, mask="mask.bmp", Mode="Inpaint", Deep=1, Turbo=2)
+# Mixed-transparency candidate only after confirming that classification
+InpaintDelogo(Loc=regionLoc, mask="mask.bmp", Mode="Both", Analyze=1, Interp=2, dPP=-3, oPP=0)
 ```
 
 ## FFmpeg Export Commands
@@ -387,10 +394,18 @@ ffmpeg -i input.avs -c:v libx264 -preset ultrafast -crf 23 -t 30 preview.mp4
 Render video to a new file, then map audio from the untouched source:
 
 ```powershell
-ffmpeg -i .\input.avs -i .\input.mp4 -map 0:v:0 -map 1:a? -c:v libx264 -preset slow -crf 18 -c:a copy .\output-delogo.mp4
+ffmpeg -f avisynth -i .\input.avs -i .\input.mp4 -map 0:v:0 -map 1:a? -map_metadata 1 -map_chapters 1 -c:v libx264 -preset slow -crf 18 -c:a copy -movflags +faststart .\output-delogo.mp4
 ```
 
 Always render a short preview first and never reuse the source path as the output path.
+
+Validate the complete render from the repository checkout:
+
+```powershell
+pwsh -File .\toolchain\scripts\validate-render.ps1 -SourcePath .\input.mp4 -OutputPath .\output-delogo.mp4 -ToolchainRoot $toolchainRoot
+```
+
+This checks every frame, fully decodes the output, compares relevant video and container metadata, and verifies each stream-copied compressed audio payload by SHA-256. Representative output crops still require visual inspection.
 
 ### Specific Codec Options
 
@@ -422,16 +437,16 @@ InpaintDelogo(Loc="1570,904,-28,-58", mask=maskPath, Mode="Deblend", Analyze=1, 
 sourcePath = "path/to/source-video.mp4"
 maskPath = "path/to/logo-mask.bmp"
 LWLibAvVideoSource(sourcePath)
-InpaintDelogo(Loc="1540,870,-70,-30", mask=maskPath, Mode="Inpaint", Inflate=2, oPP=6)
+InpaintDelogo(Loc="1540,870,-70,-30", mask=maskPath, Mode="Inpaint", Turbo=0, Inflate=0, oPP=0)
 ```
 
-### Complete Example - Complex Logo
+### Complete Example - Confirmed Mixed-Transparency Logo
 
 ```python
 sourcePath = "path/to/source-video.mp4"
 maskPath = "path/to/logo-mask.bmp"
 LWLibAvVideoSource(sourcePath)
-InpaintDelogo(Loc="1590,910,-10,0", mask=maskPath, Mode="Both", Deep=5, Analyze=3, Interp=3, dPP=-5, oPP=6)
+InpaintDelogo(Loc="1590,910,-10,0", mask=maskPath, Mode="Both", Analyze=1, Interp=2, dPP=-3, oPP=0)
 ```
 
 ## Downloads & Dependencies
