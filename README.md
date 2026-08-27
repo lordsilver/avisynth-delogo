@@ -1,6 +1,6 @@
 # avisynth-delogo
 
-A reproducible Windows toolchain and testing guide for removing logos, watermarks, and other unwanted graphics from videos using AviSynth+ with InpaintDelogo and DoomDelogo. Every video must be evaluated independently; the repository does not store per-video configurations, source media, or unchecked local toolchain dumps.
+A reproducible Windows toolchain and testing guide for removing logos, watermarks, and other unwanted graphics from videos using AviSynth+ with InpaintDelogo. DoomDelogo is included only as a last-resort rectangular concealment fallback when InpaintDelogo cannot be used. Every video must be evaluated independently; the repository does not store per-video configurations, source media, or unchecked local toolchain dumps.
 
 ## Table of Contents
 
@@ -65,7 +65,7 @@ Launch AvsPmod through `Start-AvsPmod.cmd`. The launcher uses the bundled relati
 | AviSynth+                               | 3.7.5                      | Latest stable                                                           |
 | AvsPmod GPo                             | 2.7.9.7                    | Upgraded from 2.7.9.4                                                   |
 | InpaintDelogo                           | 3.7 at commit `a6cc5d7`    | Active file matches upstream                                            |
-| DoomDelogo                              | 1.0 at commit `cfed253`    | Included as the faster alternative                                      |
+| DoomDelogo                              | 1.0 at commit `cfed253`    | Last-resort rectangular concealment fallback                            |
 | FFT3DFilter                             | 2.12                       | Upgraded from 2.11                                                      |
 | L-SMASH-Works                           | 1310.0.0.0                 | Upgraded from 1266.0.0.0                                                |
 | Neo FFT3D                               | r14                        | Upgraded from r11                                                       |
@@ -77,11 +77,11 @@ Launch AvsPmod through `Start-AvsPmod.cmd`. The launcher uses the bundled relati
 
 ### Basic Workflow
 
-1. **Import video** using `LWLibAvVideoSource()`
-2. **Locate and isolate logo** using `Crop()` to select ONLY the logo area
-3. **Generate base mask** with `InpaintDelogo()` and `Automask=1`
-4. **Remove the crop line** and run `InpaintDelogo()` again with `Automask=0`
-5. **Export with FFmpeg**
+1. **Inspect the source** and find a frame where the logo sits on black or another plain background
+2. **Build and validate a full-frame mask** from that frame; use `Automask=1` only when no clean frame exists
+3. **Locate the mask** with an even-valued `Loc` that includes enough usable picture around it
+4. **Compare Inpaint configurations** on the same 3–10 exact frames spread across the video and the same short motion interval
+5. **Render the accepted configuration** with `Automask=0`, then validate the complete output
 
 ### Essential AviSynth Commands
 
@@ -109,7 +109,7 @@ InpaintLoc(Loc=regionLoc)
 InpaintDelogo(Loc=regionLoc, mask=maskPath, Automask=1, Analyze=2)
 InpaintDelogo(Loc=regionLoc, mask=maskPath)
 
-# Alternative: DoomDelogo (faster, lower quality)
+# Last resort: DoomDelogo conceals the whole rectangle
 DoomDelogo(regionX, regionY, regionW, regionH)
 ```
 
@@ -117,12 +117,12 @@ DoomDelogo(regionX, regionY, regionW, regionH)
 
 ## Command Reference
 
-| Function               | Purpose                                     | Example                          |
-| ---------------------- | ------------------------------------------- | -------------------------------- |
-| `LWLibAvVideoSource()` | Import video file                           | `LWLibAvVideoSource(sourcePath)` |
-| `InpaintDelogo()`      | Advanced logo removal                       | See parameters below             |
-| `DoomDelogo()`         | Simple logo removal (faster, lower quality) | `DoomDelogo(50, 50, -100, -100)` |
-| `Crop()`               | Preview logo area                           | `Crop(50, 50, -100, -100)`       |
+| Function               | Purpose                          | Example                          |
+| ---------------------- | -------------------------------- | -------------------------------- |
+| `LWLibAvVideoSource()` | Import video file                | `LWLibAvVideoSource(sourcePath)` |
+| `InpaintDelogo()`      | Advanced logo removal            | See parameters below             |
+| `DoomDelogo()`         | Rectangular concealment fallback | `DoomDelogo(50, 50, -100, -100)` |
+| `Crop()`               | Preview logo area                | `Crop(50, 50, -100, -100)`       |
 
 ### InpaintDelogo Parameters
 
@@ -165,7 +165,7 @@ DoomDelogo(regionX, regionY, regionW, regionH)
 - **Deblend**: For transparent/semi-transparent logos
 - **Both**: For logos with mixed transparency
 
-These are starting points, not reusable presets. Test representative frames from each background type in the current video, and tune the mask, region, analysis, and post-processing for that video before rendering.
+These are starting points, not reusable presets. First build the mask from a black, preferably pure-black for a bright opaque watermark, or plain-background source frame when possible and verify that it selects only the watermark. A temporary crop can help isolate it, but the final mask must be restored to full-frame dimensions. Because black can conceal a dark outline or drop shadow, also verify the mask on a plain colored frame and add only the smallest tested dilation that removes any fringe. Then test a fixed matrix on the same 3–10 exact frames distributed across the full timeline, compare the best candidates over the same motion interval, and tune the region, mask, analysis, and post-processing for that video before rendering.
 
 ### Analysis Methods
 
@@ -290,7 +290,7 @@ ffmpeg -i .\processed-frame.avs -frames:v 1 .\.scratch\processed-f1000.png
 ffmpeg -i .\.scratch\processed-f1000.png -vf "crop=320:180:1500:880,scale=640:360:flags=neighbor" .\.scratch\processed-f1000-crop-2x.png
 ```
 
-Test black bars, flat or gray areas, clothing or people, high-detail texture, and motion. See `docs/testing-workflow.md` for the complete procedure.
+Choose 3–10 reference frames from early, middle, and late sections that cover flat colors, gradients, edges or text crossing the watermark, high-detail texture, and motion. Use the same exact frames for every configuration, compare full frames and enlarged crops, and render matching temporal previews before accepting one winner. Only then render the complete video. See `docs/testing-workflow.md` for the complete procedure.
 
 ## Troubleshooting
 
@@ -441,7 +441,7 @@ InpaintDelogo(Loc="1590,910,-10,0", mask=maskPath, Mode="Both", Deep=5, Analyze=
 | **AviSynth+**                     | Runtime | [GitHub](https://github.com/AviSynth/AviSynthPlus)                     | Required runtime environment                                                         |
 | **AvsPmod GPo**                   | Editor  | [GitHub](https://github.com/gispos/AvsPmod)                            | Maintained AviSynth script editor build                                              |
 | **AvsInpaint**                    | Plugin  | [GitHub](https://github.com/pinterf/AvsInpaint)                        | Core inpainting plugin (v1.3+)                                                       |
-| **DoomDelogo**                    | Plugin  | [GitHub](https://github.com/Purfview/DoomDelogo)                       | Faster logo removal alternative                                                      |
+| **DoomDelogo**                    | Plugin  | [GitHub](https://github.com/Purfview/DoomDelogo)                       | Last-resort rectangular concealment fallback                                         |
 | **FFT3DFilter**                   | Plugin  | [AviSynth Wiki](http://avisynth.nl/index.php/FFT3DFilter)              | Denoising filter                                                                     |
 | **ffms2**                         | Plugin  | [GitHub](https://github.com/FFMS/ffms2)                                | Alternative video source                                                             |
 | **FrameSel**                      | Plugin  | [AviSynth Wiki](https://avisynth.nl/index.php/FrameSel)                | Required by InpaintDelogo and included in the toolchain release                      |
@@ -463,7 +463,7 @@ InpaintDelogo(Loc="1590,910,-10,0", mask=maskPath, Mode="Both", Deep=5, Analyze=
 ## Reference Links
 
 - [InpaintDelogo GitHub](https://github.com/Purfview/InpaintDelogo) - Advanced delogo plugin
-- [DoomDelogo GitHub](https://github.com/Purfview/DoomDelogo) - Faster alternative
+- [DoomDelogo GitHub](https://github.com/Purfview/DoomDelogo) - Rectangular concealment fallback
 - [InpaintDelogo Forum Thread](https://forum.doom9.org/showthread.php?t=176860) - Main discussion & support
 - [AviSynth+ Download](https://github.com/AviSynth/AviSynthPlus) - Required runtime
 - [AvsInpaint Plugin](https://github.com/pinterf/AvsInpaint) - Required dependency

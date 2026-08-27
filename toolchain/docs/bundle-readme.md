@@ -16,7 +16,7 @@ The runtime layout is intentionally flat: AvsPmod is under `AvsPmod`, and x64 Av
 
 Use `Start-AvsPmod.cmd`, including when launching from Explorer. It starts `AvsPmod\AvsPmod.exe` with relative portable settings and configures the current user's AviSynth+ `PluginDir+` registry value for `Plugins`. Launching `AvsPmod.exe` directly bypasses that setup.
 
-Both `InpaintDelogo()` and the faster, lower-quality `DoomDelogo()` alternative are included directly under `Plugins`.
+`InpaintDelogo()` is the normal logo-removal tool. `DoomDelogo()` is also included under `Plugins`, but it should be used only as a last-resort fallback because it conceals the selected rectangle from its borders instead of reconstructing the covered content.
 
 If Windows reports missing Microsoft Visual C++ runtime DLLs, install the [latest supported official x64 Redistributable](https://aka.ms/vc14/vc_redist.x64.exe).
 
