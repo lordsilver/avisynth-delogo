@@ -49,6 +49,22 @@ jobs:
           }
           mise run build:toolchain -- -OutputDirectory "$env:RUNNER_TEMP\dist" -OfflineCacheRoot "$env:RUNNER_TEMP\source-cache" -Version $version
 
+      - name: Test render validator from the bundle
+        shell: pwsh
+        run: |
+          $archive = Get-ChildItem -LiteralPath "$env:RUNNER_TEMP\dist" -Filter "*.zip" -File | Select-Object -First 1
+          if (-not $archive) {
+            throw "Built toolchain ZIP was not found."
+          }
+          $testRoot = Join-Path $env:RUNNER_TEMP "render-validator-bundle"
+          Expand-Archive -LiteralPath $archive.FullName -DestinationPath $testRoot
+          $bundleRoot = Get-ChildItem -LiteralPath $testRoot -Directory | Select-Object -First 1
+          if (-not $bundleRoot) {
+            throw "Expanded toolchain root was not found."
+          }
+          $env:PATH = "$($bundleRoot.FullName)$([IO.Path]::PathSeparator)$($bundleRoot.FullName)$([IO.Path]::PathSeparator)$env:PATH"
+          mise run test:validate-render -- -ToolchainRoot $bundleRoot.FullName -ValidatorPath (Join-Path $bundleRoot.FullName "validate-render.ps1")
+
       - name: Build verified source archive
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         shell: pwsh

@@ -122,6 +122,6 @@ pwsh -File .\toolchain\scripts\validate-render.ps1 `
   -ToolchainRoot $toolchainRoot
 ```
 
-The validator counts every source and output video frame, compares dimensions, frame rate, pixel format, color metadata, chapters, and non-muxer format tags, hashes each stream-copied compressed audio payload, and fully decodes the delivered file. It intentionally ignores muxer-dependent tags such as `encoder` and `compatible_brands`. Use `-SkipAudioIdentity` only when audio transcoding was intentional.
+The validator counts every source and output video frame, compares dimensions, frame rate, pixel format, color metadata, chapter timing and metadata, and non-muxer format tags, hashes each stream-copied compressed audio payload, and fully decodes the delivered file. It intentionally ignores muxer-dependent tags such as `encoder` and `compatible_brands`. Use `-SkipAudioIdentity` only when audio transcoding was intentional; it still requires the same number of audio streams but permits codec, layout, and payload differences.
 
 Finally, extract representative crops from the actual delivered file and inspect them. Automated checks can prove structural integrity and audio identity, but they cannot judge the synthesized picture behind an opaque watermark.

@@ -21,14 +21,14 @@ function Resolve-NativeTool {
         return $candidate
     }
 
-    $command = Get-Command "$Name.exe" -CommandType Application -ErrorAction SilentlyContinue
+    $command = Get-Command "$Name.exe" -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     if (-not $command) {
-        $command = Get-Command $Name -CommandType Application -ErrorAction SilentlyContinue
+        $command = Get-Command $Name -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     }
     if (-not $command) {
         throw "Required tool '$Name' was not found. Pass -ToolchainRoot or activate the portable toolchain."
     }
-    return $command.Source
+    return [string]$command.Source
 }
 
 function Invoke-CapturedCommand {
@@ -38,13 +38,36 @@ function Invoke-CapturedCommand {
         [Parameter(Mandatory)][string]$Label
     )
 
-    $captured = @(& $Command @Arguments 2>&1)
-    $exitCode = $LASTEXITCODE
-    $text = ($captured | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
-    if ($exitCode -ne 0) {
-        throw "$Label failed with exit code $exitCode.$([Environment]::NewLine)$text"
+    $process = [Diagnostics.Process]::new()
+    $process.StartInfo = [Diagnostics.ProcessStartInfo]::new()
+    $process.StartInfo.FileName = $Command
+    $process.StartInfo.UseShellExecute = $false
+    $process.StartInfo.CreateNoWindow = $true
+    $process.StartInfo.RedirectStandardOutput = $true
+    $process.StartInfo.RedirectStandardError = $true
+    foreach ($argument in $Arguments) {
+        [void]$process.StartInfo.ArgumentList.Add($argument)
     }
-    return $text
+
+    try {
+        [void]$process.Start()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        $stderr = $stderrTask.GetAwaiter().GetResult()
+        if ($process.ExitCode -ne 0) {
+            $detail = if ($stderr) { $stderr.TrimEnd() } else { $stdout.TrimEnd() }
+            throw "$Label failed with exit code $($process.ExitCode).$([Environment]::NewLine)$detail"
+        }
+        if ($stderr) {
+            Write-Verbose "$Label wrote to stderr:$([Environment]::NewLine)$($stderr.TrimEnd())"
+        }
+        return $stdout
+    }
+    finally {
+        $process.Dispose()
+    }
 }
 
 function Get-Probe {
@@ -111,6 +134,21 @@ function Assert-Equal {
     }
 }
 
+function Assert-TimeEqual {
+    param(
+        [Parameter(Mandatory)][string]$Label,
+        [Parameter(Mandatory)][object]$SourceValue,
+        [Parameter(Mandatory)][object]$OutputValue,
+        [double]$ToleranceSeconds = 0.001
+    )
+
+    $sourceSeconds = [double]::Parse([string]$SourceValue, [Globalization.CultureInfo]::InvariantCulture)
+    $outputSeconds = [double]::Parse([string]$OutputValue, [Globalization.CultureInfo]::InvariantCulture)
+    if ([Math]::Abs($sourceSeconds - $outputSeconds) -gt $ToleranceSeconds) {
+        throw "$Label differs: source='$SourceValue', output='$OutputValue', tolerance='$ToleranceSeconds' seconds."
+    }
+}
+
 function Get-AudioPayloadHash {
     param(
         [Parameter(Mandatory)][string]$Ffmpeg,
@@ -174,13 +212,12 @@ Assert-Equal -Label "Audio stream count" -SourceValue $sourceAudio.Count -Output
 
 $audioResults = @()
 for ($audioIndex = 0; $audioIndex -lt $sourceAudio.Count; $audioIndex++) {
-    foreach ($propertyName in @("codec_name", "sample_rate", "channels", "channel_layout")) {
-        Assert-Equal -Label "Audio stream $audioIndex $propertyName" -SourceValue (Get-OptionalProperty $sourceAudio[$audioIndex] $propertyName) -OutputValue (Get-OptionalProperty $outputAudio[$audioIndex] $propertyName)
-    }
-
     $sourceHash = $null
     $outputHash = $null
     if (-not $SkipAudioIdentity) {
+        foreach ($propertyName in @("codec_name", "sample_rate", "channels", "channel_layout")) {
+            Assert-Equal -Label "Audio stream $audioIndex $propertyName" -SourceValue (Get-OptionalProperty $sourceAudio[$audioIndex] $propertyName) -OutputValue (Get-OptionalProperty $outputAudio[$audioIndex] $propertyName)
+        }
         $sourceHash = Get-AudioPayloadHash -Ffmpeg $ffmpeg -Path $resolvedSource -AudioIndex $audioIndex
         $outputHash = Get-AudioPayloadHash -Ffmpeg $ffmpeg -Path $resolvedOutput -AudioIndex $audioIndex
         Assert-Equal -Label "Audio stream $audioIndex compressed payload SHA-256" -SourceValue $sourceHash -OutputValue $outputHash
@@ -188,7 +225,8 @@ for ($audioIndex = 0; $audioIndex -lt $sourceAudio.Count; $audioIndex++) {
 
     $audioResults += [pscustomobject]@{
         index = $audioIndex
-        codec = Get-OptionalProperty $sourceAudio[$audioIndex] "codec_name"
+        source_codec = Get-OptionalProperty $sourceAudio[$audioIndex] "codec_name"
+        output_codec = Get-OptionalProperty $outputAudio[$audioIndex] "codec_name"
         payload_sha256 = $sourceHash
     }
 }
@@ -196,6 +234,19 @@ for ($audioIndex = 0; $audioIndex -lt $sourceAudio.Count; $audioIndex++) {
 $sourceChapters = @($sourceProbe.chapters)
 $outputChapters = @($outputProbe.chapters)
 Assert-Equal -Label "Chapter count" -SourceValue $sourceChapters.Count -OutputValue $outputChapters.Count
+for ($chapterIndex = 0; $chapterIndex -lt $sourceChapters.Count; $chapterIndex++) {
+    Assert-TimeEqual -Label "Chapter $chapterIndex start time" -SourceValue (Get-OptionalProperty $sourceChapters[$chapterIndex] "start_time") -OutputValue (Get-OptionalProperty $outputChapters[$chapterIndex] "start_time")
+    Assert-TimeEqual -Label "Chapter $chapterIndex end time" -SourceValue (Get-OptionalProperty $sourceChapters[$chapterIndex] "end_time") -OutputValue (Get-OptionalProperty $outputChapters[$chapterIndex] "end_time")
+
+    $sourceChapterTags = Get-OptionalProperty $sourceChapters[$chapterIndex] "tags"
+    $outputChapterTags = Get-OptionalProperty $outputChapters[$chapterIndex] "tags"
+    if ($sourceChapterTags) {
+        foreach ($sourceChapterTag in $sourceChapterTags.PSObject.Properties) {
+            $outputValue = if ($outputChapterTags) { Get-OptionalProperty $outputChapterTags $sourceChapterTag.Name } else { $null }
+            Assert-Equal -Label "Chapter $chapterIndex metadata '$($sourceChapterTag.Name)'" -SourceValue $sourceChapterTag.Value -OutputValue $outputValue
+        }
+    }
+}
 
 $ignoredFormatTags = @("major_brand", "minor_version", "compatible_brands", "encoder")
 $sourceTags = Get-OptionalProperty $sourceProbe.format "tags"
@@ -219,7 +270,7 @@ $null = Invoke-CapturedCommand -Command $ffmpeg -Label "full output decode" -Arg
     "-map", "0:v:0",
     "-map", "0:a?",
     "-f", "null",
-    "NUL"
+    "-"
 )
 
 $result = [pscustomobject]@{
