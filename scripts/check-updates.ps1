@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$OutputFile = (Join-Path $PSScriptRoot "..\update-report.json"))
+param([string]$OutputFile = (Join-Path $PSScriptRoot "..\.scratch\update-report.json"))
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
@@ -54,6 +54,7 @@ $report = [pscustomobject]@{
     updates = @($results | Where-Object update_available)
     components = $results
 }
+New-Item -ItemType Directory -Path (Split-Path -Parent ([IO.Path]::GetFullPath($OutputFile))) -Force | Out-Null
 $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $OutputFile -Encoding utf8
 
 if ($env:GITHUB_STEP_SUMMARY) {

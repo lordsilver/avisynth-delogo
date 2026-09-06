@@ -2,7 +2,7 @@
 param(
     [string]$ToolchainRoot = $(if ($env:AVISYNTH_DELOGO_ROOT) { $env:AVISYNTH_DELOGO_ROOT } else { Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "avisynth-delogo" }),
     [string]$OfflineCacheRoot = $env:AVISYNTH_DELOGO_OFFLINE_CACHE_ROOT,
-    [string]$LockFile = $(if (Test-Path -LiteralPath (Join-Path $PSScriptRoot "toolchain.lock.json")) { Join-Path $PSScriptRoot "toolchain.lock.json" } else { Join-Path $PSScriptRoot "..\manifests\toolchain.lock.json" })
+    [string]$LockFile = (Join-Path $PSScriptRoot "..\toolchain\manifests\toolchain.lock.json")
 )
 
 $ErrorActionPreference = "Stop"

@@ -1,17 +1,19 @@
 # Delogo Testing Workflow
 
+[Home](../README.md) · [Getting started](getting-started.md) · [Filter reference](reference.md)
+
 Use this workflow to compare logo-removal configurations without changing source media or turning one successful frame into a universal recommendation.
 
 ## Prerequisites
 
-Run the toolchain verification before testing:
+Run the toolchain verification from the checkout root before testing. Set `$toolchainRoot` to the extracted portable bundle; the example uses the conventional local application data location:
 
 ```powershell
 $toolchainRoot = Join-Path $env:LOCALAPPDATA "avisynth-delogo"
-pwsh -File .\toolchain\scripts\verify-toolchain.ps1 -ToolchainRoot $toolchainRoot
+pwsh -File .\toolchain\bundle\verify-toolchain.ps1 -ToolchainRoot $toolchainRoot
 ```
 
-Inspect the source before choosing frames:
+Activate the bundle's `activate.ps1` in the current PowerShell session, then run the media commands from the video's working directory. Inspect the source before choosing frames:
 
 ```powershell
 ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate,nb_frames,duration -of json .\input.mp4
@@ -25,13 +27,15 @@ Search the source for a frame where the watermark sits on black, preferably pure
 
 Generate several binary threshold candidates when the watermark has soft or antialiased edges. Select the lowest threshold that covers the whole watermark without selecting background pixels. If the undilated mask leaves an edge fringe or a shadow that the mask-source background concealed, compare no dilation with the smallest useful dilation values and retain the least amount that removes those remnants on difficult reference frames. Do not use dilation as a substitute for choosing a correct threshold.
 
+Keep saved-mask dilation and InpaintDelogo's `Inflate` parameter distinct in filenames and test records. A mask saved after a two-pixel morphological dilation with `Inflate=0` is not automatically interchangeable with the undilated mask and `Inflate=2`; compare them on the same exact frames before treating their results as equivalent.
+
 The final mask must be full-frame, exactly match the source dimensions, and contain only the watermark as white foreground. Overlay it on a native-resolution source frame and reject it if unrelated text, UI, scenery, or rectangular padding is selected. Derive `Loc` from the nonzero bounds of the validated mask, round all four values to even numbers, and retain at least 18 pixels of usable picture around the mask for HD or UHD sources.
 
 Do not begin filter tuning until this mask-alignment check passes. A filter comparison made with a contaminated or incomplete mask is invalid.
 
 ## Exact-frame tests
 
-For pure inpaint tests, trim before the filter so only the requested frame is processed:
+Use exact zero-based frame numbers. For pure inpaint tests, trim before the filter so only the requested frame is processed:
 
 ```python
 sourcePath = "path/to/source-video.mp4"
@@ -86,7 +90,8 @@ For an opaque watermark, the minimum useful matrix is:
 - A default Inpaint baseline.
 - The same configuration with `oPP=0` to expose post-processing softness.
 - Relevant `Turbo` quality presets with other parameters held constant.
-- `Inflate=0` and mask inflation only when edge coverage is uncertain.
+- Undilated and minimally dilated saved-mask revisions when edge coverage is uncertain.
+- Filter-time `Inflate` only as a separately labeled comparison with the saved mask held constant.
 
 Test Deblend or Both only when the watermark is genuinely transparent or mixed. These modes are not automatic upgrades for an opaque watermark.
 
@@ -110,4 +115,15 @@ Only after that acceptance gate, render the entire video to a new output path. N
 
 Re-encode the filtered video and stream-copy the original audio when the output container supports it. Avoid `-shortest` when the source audio is slightly longer than the video because it can discard the last compressed audio packet.
 
-Validate the final file with a full decode, exact video frame count, stream metadata, representative processed crops, and audio packet counts. When an exact audio copy is required, extract the source and output elementary audio streams and compare their hashes.
+Run the deterministic final checks from the checkout:
+
+```powershell
+pwsh -File .\toolchain\bundle\validate-render.ps1 `
+  -SourcePath .\input.mp4 `
+  -OutputPath .\output-delogo.mp4 `
+  -ToolchainRoot $toolchainRoot
+```
+
+The validator counts every source and output video frame, compares dimensions, frame rate, pixel format, color metadata, chapter timing and metadata, and non-muxer format tags, hashes each stream-copied compressed audio payload, and fully decodes the delivered file. It intentionally ignores muxer-dependent tags such as `encoder` and `compatible_brands`. Use `-SkipAudioIdentity` only when audio transcoding was intentional; it still requires the same number of audio streams but permits codec, layout, and payload differences.
+
+Finally, extract representative crops from the actual delivered file and inspect them. Automated checks can prove structural integrity and audio identity, but they cannot judge the synthesized picture behind an opaque watermark.

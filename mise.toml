@@ -3,6 +3,7 @@
 [tools]
 actionlint = "1.7.12"
 "aqua:ip7z/7zip" = "26.02"
+ffmpeg = "9.0.1"
 github-cli = "2.98.0"
 gitleaks = "8.30.1"
 jq = "1.8.2"
@@ -15,41 +16,61 @@ yq = "4.53.6"
 [tasks.format]
 description = "Format repository files"
 run = [
-  "taplo format mise.toml",
-  "prettier --write README.md docs skills toolchain .github",
+  "taplo format mise.toml .gitleaks.toml",
+  "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
 ]
 
 [tasks."format:check"]
 description = "Check repository formatting"
 run = [
-  "taplo format --check mise.toml",
-  "prettier --check README.md docs skills toolchain .github",
+  "taplo format --check mise.toml .gitleaks.toml",
+  "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",
 ]
 
+[tasks.check]
+description = "Run repository validation and generated-media regression tests"
+depends = ["validate", "test"]
+
+[tasks.test]
+description = "Run local regression tests"
+depends = ["test:validate-render"]
+
 [tasks.validate]
-description = "Validate manifests, formatting, workflows, and secrets"
-run = "pwsh -NoProfile -File ./toolchain/scripts/validate-repository.ps1"
+description = "Validate manifests, PowerShell syntax, documentation links, formatting, workflows, and secrets"
+run = "pwsh -NoProfile -File ./scripts/validate-repository.ps1"
 
 [tasks."bootstrap:toolchain"]
-description = "Assemble the pinned Windows toolchain; append PowerShell parameters after --"
-run = "pwsh -NoProfile -File ./toolchain/scripts/bootstrap-toolchain.ps1"
+description = "Install locked runtime files; use build:toolchain for the complete portable bundle"
+run = "pwsh -NoProfile -File ./scripts/bootstrap-toolchain.ps1"
 
 [tasks."verify:toolchain"]
 description = "Verify an assembled Windows toolchain; append PowerShell parameters after --"
-run = "pwsh -NoProfile -File ./toolchain/scripts/verify-toolchain.ps1"
+run = "pwsh -NoProfile -File ./toolchain/bundle/verify-toolchain.ps1"
+
+[tasks."validate:render"]
+description = "Validate a completed render; append source, output, and toolchain parameters after --"
+run = "pwsh -NoProfile -File ./toolchain/bundle/validate-render.ps1"
+
+[tasks."test:validate-render"]
+description = "Exercise render validation with generated copied-audio and transcoded-audio fixtures"
+run = "pwsh -NoProfile -File ./tests/test-validate-render.ps1"
 
 [tasks."build:toolchain"]
 description = "Build and verify the distributable Windows toolchain ZIP"
-run = "pwsh -NoProfile -File ./toolchain/scripts/build-release.ps1"
+run = "pwsh -NoProfile -File ./scripts/build-release.ps1"
+
+[tasks."test:release"]
+description = "Check both built ZIPs and exercise the bundled validator on Windows"
+run = "pwsh -NoProfile -File ./tests/test-release.ps1"
 
 [tasks."build:sources"]
 description = "Build the aggregate verified source ZIP"
-run = "pwsh -NoProfile -File ./toolchain/scripts/build-sources.ps1"
+run = "pwsh -NoProfile -File ./scripts/build-sources.ps1"
 
 [tasks."collect:sources"]
 description = "Collect and verify the pinned build inputs"
-run = "pwsh -NoProfile -File ./toolchain/scripts/collect-sources.ps1"
+run = "pwsh -NoProfile -File ./scripts/collect-sources.ps1"
 
 [tasks."check:updates"]
 description = "Check pinned components for upstream updates"
-run = "pwsh -NoProfile -File ./toolchain/scripts/check-updates.ps1"
+run = "pwsh -NoProfile -File ./scripts/check-updates.ps1"
