@@ -2,11 +2,10 @@ name: Toolchain
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
   pull_request:
     branches: [main]
-  schedule:
-    - cron: "0 0 1 * *"
   workflow_dispatch:
 
 concurrency:
@@ -17,8 +16,24 @@ permissions:
   contents: read
 
 jobs:
-  validate-and-build:
-    if: ${{ github.event_name != 'schedule' }}
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pinned tools
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+
+      - name: Validate repository and run regression tests
+        run: mise run check
+
+  build:
+    needs: validate
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
@@ -33,53 +48,38 @@ jobs:
         with:
           cache: true
 
-      - name: Validate repository
-        run: mise run validate
-
       - name: Collect and verify pinned sources
         shell: pwsh
         run: mise run collect:sources -- -CacheDirectory "$env:RUNNER_TEMP\source-cache" -OutputDirectory "$env:RUNNER_TEMP\source-assets"
 
+      - name: Select artifact version
+        shell: pwsh
+        run: |
+          $releaseVersion = if ($env:GITHUB_REF_TYPE -eq "tag") { $env:GITHUB_REF_NAME -replace '^v', '' } else { "ci-$env:GITHUB_RUN_NUMBER" }
+          "RELEASE_VERSION=$releaseVersion" >> $env:GITHUB_ENV
+
       - name: Build verified x64 bundle
         shell: pwsh
-        run: |
-          $version = "${{ github.ref_name }}"
-          if ($version.StartsWith("v")) {
-            $version = $version.Substring(1)
-          }
-          mise run build:toolchain -- -OutputDirectory "$env:RUNNER_TEMP\dist" -OfflineCacheRoot "$env:RUNNER_TEMP\source-cache" -Version $version
-
-      - name: Test render validator from the bundle
-        shell: pwsh
-        run: |
-          $archive = Get-ChildItem -LiteralPath "$env:RUNNER_TEMP\dist" -Filter "*.zip" -File | Select-Object -First 1
-          if (-not $archive) {
-            throw "Built toolchain ZIP was not found."
-          }
-          $testRoot = Join-Path $env:RUNNER_TEMP "render-validator-bundle"
-          Expand-Archive -LiteralPath $archive.FullName -DestinationPath $testRoot
-          $bundleRoot = Get-ChildItem -LiteralPath $testRoot -Directory | Select-Object -First 1
-          if (-not $bundleRoot) {
-            throw "Expanded toolchain root was not found."
-          }
-          $env:PATH = "$($bundleRoot.FullName)$([IO.Path]::PathSeparator)$($bundleRoot.FullName)$([IO.Path]::PathSeparator)$env:PATH"
-          mise run test:validate-render -- -ToolchainRoot $bundleRoot.FullName -ValidatorPath (Join-Path $bundleRoot.FullName "validate-render.ps1")
+        run: mise run build:toolchain -- -OutputDirectory "$env:RUNNER_TEMP\dist" -OfflineCacheRoot "$env:RUNNER_TEMP\source-cache" -Version $env:RELEASE_VERSION
 
       - name: Build verified source archive
-        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         shell: pwsh
-        run: |
-          $version = $env:GITHUB_REF_NAME -replace '^v', ''
-          mise run build:sources -- -SourceDirectory "$env:RUNNER_TEMP\source-assets" -OutputDirectory "$env:RUNNER_TEMP\source-dist" -Version $version
+        run: mise run build:sources -- -SourceDirectory "$env:RUNNER_TEMP\source-assets" -OutputDirectory "$env:RUNNER_TEMP\source-dist" -Version $env:RELEASE_VERSION
 
-      - name: Upload exact bundle artifact
+      - name: Test exact release archives and bundled runtime
+        shell: pwsh
+        run: mise run test:release -- -ToolchainArchive "$env:RUNNER_TEMP\dist\avisynth-delogo-x64-$env:RELEASE_VERSION.zip" -SourceArchive "$env:RUNNER_TEMP\source-dist\avisynth-delogo-sources-$env:RELEASE_VERSION.zip"
+
+      - name: Upload exact release artifacts
         if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: avisynth-delogo-x64
+          name: avisynth-delogo-bundles
           path: |
             ${{ runner.temp }}/dist/*.zip
             ${{ runner.temp }}/dist/*.sha256
+            ${{ runner.temp }}/source-dist/*.zip
+            ${{ runner.temp }}/source-dist/*.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -124,48 +124,3 @@ jobs:
           Get-ChildItem -LiteralPath "$env:RUNNER_TEMP\dist" -File | ForEach-Object {
               gh release upload "$env:GITHUB_REF_NAME" $_.FullName --clobber
           }
-
-  upstream-check:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-      issues: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup pinned tools
-        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
-        with:
-          cache: true
-
-      - name: Check official upstreams
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: mise run check:updates
-
-      - name: Create or refresh update issue
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          update_count="$(jq '.updates | length' toolchain/update-report.json)"
-          if [ "$update_count" -eq 0 ]; then
-            exit 0
-          fi
-          body_file="$RUNNER_TEMP/toolchain-updates.md"
-          {
-            echo "The scheduled toolchain check found $update_count upstream update(s)."
-            echo
-            jq -r '.updates[] | "- **\(.component)**: `\(.current)` -> `\(.latest)` (\(.url))"' toolchain/update-report.json
-            echo
-            echo "Review compatibility, update the pinned source catalog and hashes, then rebuild the release bundle."
-          } >"$body_file"
-          issue_number="$(gh issue list --state open --search 'Toolchain updates available in:title' --json number,title --jq '.[] | select(.title == "Toolchain updates available") | .number' | head -1)"
-          if [ -n "$issue_number" ]; then
-            gh issue edit "$issue_number" --body-file "$body_file"
-          else
-            gh issue create --title "Toolchain updates available" --body-file "$body_file"
-          fi

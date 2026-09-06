@@ -70,7 +70,7 @@ if ($ToolchainRoot) {
 
 $ffmpeg = Resolve-TestTool -Name "ffmpeg"
 $pwsh = (Get-Process -Id $PID).Path
-$validator = if ($ValidatorPath) { (Resolve-Path -LiteralPath $ValidatorPath).Path } else { Join-Path $PSScriptRoot "validate-render.ps1" }
+$validator = if ($ValidatorPath) { (Resolve-Path -LiteralPath $ValidatorPath).Path } else { Join-Path $PSScriptRoot "..\toolchain\bundle\validate-render.ps1" }
 $temporaryRoot = Join-Path ([IO.Path]::GetTempPath()) "avisynth-delogo-render-test-$([Guid]::NewGuid().ToString('N'))"
 $metadataPath = Join-Path $temporaryRoot "metadata.txt"
 $sourcePath = Join-Path $temporaryRoot "source.mkv"

@@ -5,7 +5,7 @@ description: Remove a burned-in logo or watermark from a user-supplied video wit
 
 # AviSynth Delogo
 
-Use the verified portable toolchain rather than an unverified system AviSynth installation. When the project checkout is available, verify `toolchain/manifests/toolchain.lock.json` and run `toolchain/scripts/verify-toolchain.ps1` natively on Windows before processing. Stop if required files are missing, hashes differ, or the bundled FFmpeg cannot render the smoke-test script.
+Use the verified portable toolchain rather than an unverified system AviSynth installation. When the project checkout is available, verify `toolchain/manifests/toolchain.lock.json` and run `toolchain/bundle/verify-toolchain.ps1` natively on Windows before processing. Stop if required files are missing, hashes differ, or the bundled FFmpeg cannot render the smoke-test script.
 
 Never overwrite or commit source media, generated media, indexes, masks, previews, or per-video work logs.
 
@@ -29,6 +29,6 @@ Do not accept a configuration after testing only one filter setup or one easy fr
 
 Render to a new output path while preserving the source frame rate and color metadata. Re-encode the filtered video and stream-copy the original audio when compatible. Do not use `-shortest` when it would discard a longer final audio packet; verify audio packet counts or compare hashes of extracted elementary audio streams.
 
-Validate the delivered file with a full decode, exact video frame count, stream metadata, and representative crops from the actual output. When working from the project checkout or release bundle, run `toolchain/scripts/validate-render.ps1` or the bundled `validate-render.ps1` for the deterministic checks, then inspect the actual output crops separately.
+Validate the delivered file with a full decode, exact video frame count, stream metadata, and representative crops from the actual output. When working from the project checkout or release bundle, run `toolchain/bundle/validate-render.ps1` or the bundled `validate-render.ps1` for the deterministic checks, then inspect the actual output crops separately.
 
 When working from the project checkout, use `docs/testing-workflow.md` for command examples and trimming details.

@@ -1,0 +1,58 @@
+name: Upstream updates
+
+on:
+  schedule:
+    - cron: "0 0 1 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: upstream-updates-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  upstream-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pinned tools
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          cache: true
+
+      - name: Check official upstreams
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: mise run check:updates
+
+      - name: Create or refresh update issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          update_count="$(jq '.updates | length' .scratch/update-report.json)"
+          if [ "$update_count" -eq 0 ]; then
+            exit 0
+          fi
+          body_file="$RUNNER_TEMP/toolchain-updates.md"
+          {
+            echo "The scheduled toolchain check found $update_count upstream update(s)."
+            echo
+            jq -r '.updates[] | "- **\(.component)**: `\(.current)` -> `\(.latest)` (\(.url))"' .scratch/update-report.json
+            echo
+            echo "Review compatibility, update the pinned source catalog and hashes, then rebuild the release bundle."
+          } >"$body_file"
+          issue_number="$(gh issue list --state open --search 'Toolchain updates available in:title' --json number,title --jq '.[] | select(.title == "Toolchain updates available") | .number' | head -1)"
+          if [ -n "$issue_number" ]; then
+            gh issue edit "$issue_number" --body-file "$body_file"
+          else
+            gh issue create --title "Toolchain updates available" --body-file "$body_file"
+          fi

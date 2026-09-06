@@ -1,9 +1,9 @@
 [CmdletBinding()]
 param(
-    [string]$CacheDirectory = (Join-Path ([IO.Path]::GetTempPath()) "avisynth-delogo-source-cache"),
-    [string]$OutputDirectory = (Join-Path ([IO.Path]::GetTempPath()) "avisynth-delogo-source-assets"),
+    [string]$CacheDirectory = (Join-Path $PSScriptRoot "..\.scratch\source-cache"),
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\.scratch\source-assets"),
     [string]$OfflineCacheRoot = $env:AVISYNTH_DELOGO_OFFLINE_CACHE_ROOT,
-    [string]$LockFile = (Join-Path $PSScriptRoot "..\manifests\toolchain.lock.json")
+    [string]$LockFile = (Join-Path $PSScriptRoot "..\toolchain\manifests\toolchain.lock.json")
 )
 
 $ErrorActionPreference = "Stop"

@@ -3,6 +3,4 @@ useDefault = true
 
 [[allowlists]]
 description = "Generated local artifacts excluded by .gitignore"
-paths = [
-  '''(^|/)\.scratch/''',
-]
+paths = ['''(^|/)\.scratch/''', '''(^|/)dist/''']

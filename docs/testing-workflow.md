@@ -1,17 +1,19 @@
 # Delogo Testing Workflow
 
+[Home](../README.md) · [Getting started](getting-started.md) · [Filter reference](reference.md)
+
 Use this workflow to compare logo-removal configurations without changing source media or turning one successful frame into a universal recommendation.
 
 ## Prerequisites
 
-Run the toolchain verification before testing:
+Run the toolchain verification from the checkout root before testing. Set `$toolchainRoot` to the extracted portable bundle; the example uses the conventional local application data location:
 
 ```powershell
 $toolchainRoot = Join-Path $env:LOCALAPPDATA "avisynth-delogo"
-pwsh -File .\toolchain\scripts\verify-toolchain.ps1 -ToolchainRoot $toolchainRoot
+pwsh -File .\toolchain\bundle\verify-toolchain.ps1 -ToolchainRoot $toolchainRoot
 ```
 
-Inspect the source before choosing frames:
+Activate the bundle's `activate.ps1` in the current PowerShell session, then run the media commands from the video's working directory. Inspect the source before choosing frames:
 
 ```powershell
 ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate,nb_frames,duration -of json .\input.mp4
@@ -33,7 +35,7 @@ Do not begin filter tuning until this mask-alignment check passes. A filter comp
 
 ## Exact-frame tests
 
-For pure inpaint tests, trim before the filter so only the requested frame is processed:
+Use exact zero-based frame numbers. For pure inpaint tests, trim before the filter so only the requested frame is processed:
 
 ```python
 sourcePath = "path/to/source-video.mp4"
@@ -116,7 +118,7 @@ Re-encode the filtered video and stream-copy the original audio when the output 
 Run the deterministic final checks from the checkout:
 
 ```powershell
-pwsh -File .\toolchain\scripts\validate-render.ps1 `
+pwsh -File .\toolchain\bundle\validate-render.ps1 `
   -SourcePath .\input.mp4 `
   -OutputPath .\output-delogo.mp4 `
   -ToolchainRoot $toolchainRoot

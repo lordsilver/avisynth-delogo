@@ -1,14 +1,14 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][string]$SourceDirectory,
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\..\dist"),
-    [string]$Version = (Get-Date -Format "yyyy.MM.dd")
+    [string]$SourceDirectory = (Join-Path $PSScriptRoot "..\.scratch\source-assets"),
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\dist"),
+    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*$')][string]$Version = (Get-Date -Format "yyyy.MM.dd")
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-$toolchainRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$toolchainRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\toolchain")).Path
 $resolvedSourceDirectory = (Resolve-Path -LiteralPath $SourceDirectory).Path
 $stagingRoot = Join-Path ([IO.Path]::GetTempPath()) "avisynth-delogo-sources-$([Guid]::NewGuid().ToString('N'))"
 $bundleName = "avisynth-delogo-sources-$Version"
@@ -32,8 +32,8 @@ try {
     $sourceAssets | Copy-Item -Destination $assetRoot
     Copy-Item -LiteralPath (Join-Path $toolchainRoot "manifests\toolchain.lock.json") -Destination (Join-Path $bundleRoot "toolchain.lock.json")
     Copy-Item -LiteralPath (Join-Path $toolchainRoot "manifests\sources.yaml") -Destination (Join-Path $bundleRoot "sources.yaml")
-    Copy-Item -LiteralPath (Join-Path $toolchainRoot "docs\source-bundle-readme.md") -Destination (Join-Path $bundleRoot "README.md")
-    Copy-Item -LiteralPath (Join-Path $toolchainRoot "docs\third-party-notices.md") -Destination (Join-Path $bundleRoot "THIRD-PARTY-NOTICES.md")
+    Get-ChildItem -LiteralPath (Join-Path $toolchainRoot "source-bundle") -Force | Copy-Item -Destination $bundleRoot -Recurse -Force
+    Copy-Item -LiteralPath (Join-Path $toolchainRoot "THIRD-PARTY-NOTICES.md") -Destination (Join-Path $bundleRoot "THIRD-PARTY-NOTICES.md")
 
     $archivePath = Join-Path ([IO.Path]::GetFullPath($OutputDirectory)) "$bundleName.zip"
     $sevenZip = Get-Command 7z, 7zz, 7za -ErrorAction SilentlyContinue | Select-Object -First 1

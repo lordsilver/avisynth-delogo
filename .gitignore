@@ -16,7 +16,8 @@
 *.webm
 *.m2ts
 *.ts
-.scratch/
+/.scratch/
+/dist/
 /inputs/
 /masks/
 /previews/

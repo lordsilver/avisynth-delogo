@@ -1,14 +1,14 @@
 [CmdletBinding()]
 param(
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\..\dist"),
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\dist"),
     [string]$OfflineCacheRoot = $env:AVISYNTH_DELOGO_OFFLINE_CACHE_ROOT,
-    [string]$Version = (Get-Date -Format "yyyy.MM.dd")
+    [ValidatePattern('^[A-Za-z0-9][A-Za-z0-9._-]*$')][string]$Version = (Get-Date -Format "yyyy.MM.dd")
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-$toolchainRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$toolchainRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\toolchain")).Path
 $lockFile = Join-Path $toolchainRoot "manifests\toolchain.lock.json"
 $lock = Get-Content -LiteralPath $lockFile -Raw | ConvertFrom-Json -Depth 20
 $stagingRoot = Join-Path ([IO.Path]::GetTempPath()) "avisynth-delogo-release-$([Guid]::NewGuid().ToString('N'))"
@@ -96,17 +96,13 @@ try {
 
     Get-ChildItem -LiteralPath $extractedAvsPmodRoot -Force | Move-Item -Destination $avsPmodRoot -Force
     Remove-Item -LiteralPath $extractedAvsPmodRoot -Force
-    Copy-Item -LiteralPath (Join-Path $toolchainRoot "config\avspmod-options.dat") -Destination (Join-Path $avsPmodRoot "options.dat") -Force
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "activate.ps1") -Destination (Join-Path $bundleRoot "activate.ps1")
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "Start-AvsPmod.cmd") -Destination (Join-Path $bundleRoot "Start-AvsPmod.cmd")
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "verify-toolchain.ps1") -Destination (Join-Path $bundleRoot "verify-toolchain.ps1")
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "validate-render.ps1") -Destination (Join-Path $bundleRoot "validate-render.ps1")
-    Copy-Item -LiteralPath (Join-Path $toolchainRoot "docs\bundle-readme.md") -Destination (Join-Path $bundleRoot "README.md")
-    Copy-Item -LiteralPath (Join-Path $toolchainRoot "docs\third-party-notices.md") -Destination (Join-Path $bundleRoot "THIRD-PARTY-NOTICES.md")
+    # This directory mirrors the archive root: new portable files need no copy mapping.
+    Get-ChildItem -LiteralPath (Join-Path $toolchainRoot "bundle") -Force | Copy-Item -Destination $bundleRoot -Recurse -Force
+    Copy-Item -LiteralPath (Join-Path $toolchainRoot "THIRD-PARTY-NOTICES.md") -Destination (Join-Path $bundleRoot "THIRD-PARTY-NOTICES.md")
     Copy-Item -LiteralPath $lockFile -Destination (Join-Path $bundleRoot "toolchain.lock.json")
     Copy-Item -LiteralPath (Join-Path $toolchainRoot "manifests\sources.yaml") -Destination (Join-Path $bundleRoot "sources.yaml")
 
-    & (Join-Path $PSScriptRoot "verify-toolchain.ps1") -ToolchainRoot $bundleRoot -LockFile $lockFile
+    & (Join-Path $bundleRoot "verify-toolchain.ps1") -ToolchainRoot $bundleRoot
     if ($LASTEXITCODE -ne 0) {
         throw "Toolchain verification failed with exit code $LASTEXITCODE."
     }
