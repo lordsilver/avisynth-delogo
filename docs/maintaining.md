@@ -17,6 +17,7 @@ This repository is maintained as a reproducible handoff and release bundle. Keep
 | `skills/`                                | Distributable agent guidance for processing videos                             |
 | `.github/workflows/toolchain.yml`        | Validation, Windows builds, archive tests, and tagged releases                 |
 | `.github/workflows/upstream-updates.yml` | Monthly or manual upstream checks and update issue maintenance                 |
+| `.github/workflows/actions.lock`         | Commits GitHub runs for each action; generated, never edited                   |
 | `dist/`                                  | Generated ZIPs and checksums; ignored by Git                                   |
 | `.scratch/`                              | Generated source cache, collected assets, and update reports; ignored by Git   |
 
@@ -83,9 +84,11 @@ FrameSel and RT_Stats use preserved author archive URLs in the lock. If an upstr
 
 ## CI and releases
 
-The toolchain workflow runs on pull requests to `main`, pushes to `main`, `v*` tags, and manual dispatches. Linux runs the same `mise run check` command used locally. Windows collects sources once, builds both archives, verifies the extracted portable runtime, and exercises the bundled render validator. Non-tag builds upload both ZIPs and their checksums as the `avisynth-delogo-bundles` artifact.
+The toolchain workflow runs on pull requests to `main`, pushes to `main`, `v*` tags, and manual dispatches. Linux verifies the workflow lockfile and runs the same `mise run check` command used locally. Windows collects sources once, builds both archives, verifies the extracted portable runtime, and exercises the bundled render validator. Non-tag builds upload both ZIPs and their checksums as the `avisynth-delogo-bundles` artifact.
 
 A version tag such as `vYYYY.MM.DD` publishes the Windows bundle and a matching `sources-vYYYY.MM.DD` release. Inspect the actual release assets and checksums before treating publication as complete. Non-tag builds use a `ci-<run-number>` artifact version so branch names cannot become archive paths.
+
+Workflows reference actions by major version tag, and `.github/workflows/actions.lock` records the exact commit GitHub runs for each tag, with the ID of the repository it must come from ([workflow dependency lockfiles](https://docs.github.com/actions/concepts/security/workflow-dependency-lockfiles), a public preview). Dependabot is deliberately not used. mise installs the [`gh-actions-lock`](https://github.com/github/gh-actions-lock) tool at the version pinned in `mise.toml`; it reads a GitHub token from `GH_TOKEN`, or runs as `gh actions-lock` when installed as a `gh` extension at the same version. Run `gh actions-lock --no-narrow` after adding or changing a `uses:` line, so major tags stay as written, and commit the workflow and the lockfile together. To adopt newer releases within a major version, run `gh actions-lock --relock`; for a new major version, change the tag first. Review the lockfile diff like a version bump, because a changed commit is a code change and a move back to an older commit is not flagged; `gh actions-lock --verify` is the check CI runs.
 
 The separate upstream update workflow runs at 00:00 UTC on the first day of each month and supports manual dispatch. It reports upstream changes and creates or refreshes the update issue. Review compatibility and refresh both the source catalog and lock hashes before rebuilding; the dated catalog is not a claim that its versions are still the latest upstream releases.
 
