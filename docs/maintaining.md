@@ -14,7 +14,7 @@ This repository is maintained as a reproducible handoff and release bundle. Keep
 | `toolchain/bundle/`                      | First-party portable files; paths mirror the extracted Windows bundle          |
 | `toolchain/source-bundle/`               | Files copied into the aggregate source archive                                 |
 | `toolchain/manifests/`                   | The installed-file lock and dated upstream source catalog                      |
-| `skills/`                                | Distributable agent guidance for processing videos                             |
+| `.agents/skills/`                        | Distributable agent guidance for processing videos                             |
 | `.github/workflows/toolchain.yml`        | Validation, Windows builds, archive tests, and tagged releases                 |
 | `.github/workflows/upstream-updates.yml` | Monthly or manual upstream checks and update issue maintenance                 |
 | `.github/workflows/actions.lock`         | Commits GitHub runs for each action; generated, never edited                   |
