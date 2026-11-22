@@ -1,3 +1,0 @@
-# Honor the same generated-media exclusions as Git.
-# The format tasks pass .gitignore as well as this file.
-toolchain/bundle/AvsPmod/options.dat
