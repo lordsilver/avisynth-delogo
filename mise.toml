@@ -9,24 +9,18 @@ github-cli = "2.98.0"
 gitleaks = "8.30.1"
 jq = "1.8.2"
 powershell = "7.6.5"
-prettier = "3.9.6"
+biome = "2.6.8"
 ripgrep = "15.2.0"
 taplo = "0.10.0"
 yq = "4.53.6"
 
 [tasks.format]
 description = "Format repository files"
-run = [
-  "taplo format mise.toml .gitleaks.toml",
-  "prettier --write --ignore-path .gitignore --ignore-path .prettierignore .",
-]
+run = ["taplo format mise.toml .gitleaks.toml", "biome format --write ."]
 
 [tasks."format:check"]
 description = "Check repository formatting"
-run = [
-  "taplo format --check mise.toml .gitleaks.toml",
-  "prettier --check --ignore-path .gitignore --ignore-path .prettierignore .",
-]
+run = ["taplo format --check mise.toml .gitleaks.toml", "biome format ."]
 
 [tasks.check]
 description = "Run repository validation and generated-media regression tests"
